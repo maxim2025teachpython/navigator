@@ -1,26 +1,3 @@
-let map = L.map('map').setView([52.2297, 21.0122], 13); // Варшава по умолчанию
-
-// OSM слой
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-}).addTo(map);
-
-let userMarker;
-let routeLine;
-
-// Определяем геолокацию
-navigator.geolocation.getCurrentPosition(pos => {
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
-
-    userMarker = L.marker([lat, lon]).addTo(map)
-        .bindPopup("Вы здесь")
-        .openPopup();
-
-    map.setView([lat, lon], 15);
-});
-
-// Кнопка построения маршрута
 document.getElementById("routeBtn").addEventListener("click", async () => {
     const dest = document.getElementById("destination").value.trim();
     if (!dest) return alert("Введите место назначения");
@@ -38,15 +15,26 @@ document.getElementById("routeBtn").addEventListener("click", async () => {
     const destLat = data[0].lat;
     const destLon = data[0].lon;
 
+    const userPos = userMarker.getLatLng();
+
+    // Запрос к OSRM для автомобильного маршрута
+    const routeUrl = `https://router.project-osrm.org/route/v1/driving/${userPos.lng},${userPos.lat};${destLon},${destLat}?overview=full&geometries=geojson`;
+
+    const routeRes = await fetch(routeUrl);
+    const routeData = await routeRes.json();
+
+    if (!routeData.routes || !routeData.routes.length) {
+        alert("Маршрут не найден");
+        return;
+    }
+
+    const routeCoords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+
     // Удаляем старый маршрут
     if (routeLine) map.removeLayer(routeLine);
 
-    // Строим линию маршрута
-    const userPos = userMarker.getLatLng();
-    routeLine = L.polyline([
-        [userPos.lat, userPos.lng],
-        [destLat, destLon]
-    ], { color: 'yellow' }).addTo(map);
+    // Рисуем автомобильный маршрут
+    routeLine = L.polyline(routeCoords, { color: 'yellow', weight: 5 }).addTo(map);
 
     map.fitBounds(routeLine.getBounds());
 });
