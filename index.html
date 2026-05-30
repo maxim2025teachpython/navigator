@@ -3,25 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VibeCode Navigator</title>
+    <title>Navigator + Map</title>
+
     <link rel="stylesheet" href="style.css">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 </head>
 <body>
 
-    <header class="header">
-        <h1>VibeCode Navigator</h1>
-    </header>
+<header class="header">
+    <h1>Navigator + Map</h1>
+</header>
 
-    <main class="container">
-        <input id="search" type="text" placeholder="Введите запрос..." autocomplete="off">
+<main class="container">
 
-        <ul id="results" class="results"></ul>
-    </main>
+    <input id="destination" type="text" placeholder="Введите место назначения…">
 
-    <footer class="footer">
-        <p>© 2026 VibeCode</p>
-    </footer>
+    <button id="routeBtn">Построить маршрут</button>
 
-    <script src="script.js"></script>
+    <div id="map"></div>
+
+</main>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="script.js"></script>
+
 </body>
 </html>
