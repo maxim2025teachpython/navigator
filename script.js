@@ -1,36 +1,52 @@
-const searchInput = document.getElementById("search");
-const resultsList = document.getElementById("results");
+let map = L.map('map').setView([52.2297, 21.0122], 13); // Варшава по умолчанию
 
-// Пример данных — можешь заменить на свои
-const data = [
-    "Навигация по проекту",
-    "Компоненты интерфейса",
-    "Работа с API",
-    "Система модулей",
-    "Настройки приложения",
-    "Справочник функций"
-];
+// OSM слой
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+}).addTo(map);
 
-function renderResults(items) {
-    resultsList.innerHTML = "";
-    items.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = item;
-        resultsList.appendChild(li);
-    });
-}
+let userMarker;
+let routeLine;
 
-searchInput.addEventListener("input", () => {
-    const query = searchInput.value.trim().toLowerCase();
+// Определяем геолокацию
+navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
 
-    if (!query) {
-        renderResults([]);
+    userMarker = L.marker([lat, lon]).addTo(map)
+        .bindPopup("Вы здесь")
+        .openPopup();
+
+    map.setView([lat, lon], 15);
+});
+
+// Кнопка построения маршрута
+document.getElementById("routeBtn").addEventListener("click", async () => {
+    const dest = document.getElementById("destination").value.trim();
+    if (!dest) return alert("Введите место назначения");
+
+    // Геокодинг (поиск координат)
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dest)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.length) {
+        alert("Место не найдено");
         return;
     }
 
-    const filtered = data.filter(item =>
-        item.toLowerCase().includes(query)
-    );
+    const destLat = data[0].lat;
+    const destLon = data[0].lon;
 
-    renderResults(filtered);
+    // Удаляем старый маршрут
+    if (routeLine) map.removeLayer(routeLine);
+
+    // Строим линию маршрута
+    const userPos = userMarker.getLatLng();
+    routeLine = L.polyline([
+        [userPos.lat, userPos.lng],
+        [destLat, destLon]
+    ], { color: 'yellow' }).addTo(map);
+
+    map.fitBounds(routeLine.getBounds());
 });
